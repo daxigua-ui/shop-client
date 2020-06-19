@@ -153,6 +153,7 @@ export default {
         location.params = {keyword}
       }
       this.$router.push(location);
+      // this.$router.replace(location);
       this.HiddenSubCategorys();
     }
   }

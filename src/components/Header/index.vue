@@ -45,8 +45,14 @@ export default {
   name: "",
   data() {
     return {
-      keyword: ""
+      keyword: ''
     };
+  },
+  mounted() {
+    // 通过全局事件总线对象 绑定自定义事件监听   在回调中删除输入框数据
+    this.$bus.$on('removeKeyword',()=>{
+      this.keyword = ''
+    })
   },
   methods: {
     search() {
@@ -67,7 +73,12 @@ export default {
         // location.query = {keyword2: keyword.toUpperCase()}
       }
       location.query = this.$route.query
-      this.$router.push(location,()=>{})
+      if ( this.$route.name !=='search') {
+        this.$router.push(location,()=>{})
+        
+      } else {
+        this.$router.replace(location,()=>{})
+      }
     }
   }
 };

@@ -11,32 +11,42 @@
             </li>
           </ul>
           <ul class="fl sui-tag">
-            <li class="with-x">手机</li>
-            <li class="with-x">
-              iphone
-              <i>×</i>
+            <li class="with-x" v-if="options.categoryName">
+              {{options.categoryName}}
+              <i @click="removeCategory">×</i>
             </li>
-            <li class="with-x">
-              华为
-              <i>×</i>
+            <li class="with-x" v-if="options.keyword">
+              {{options.keyword}}
+              <i @click="removeKeyword">×</i>
             </li>
-            <li class="with-x">
-              OPPO
-              <i>×</i>
+            <li class="with-x" v-if="options.trademark">
+              {{options.trademark}}
+              <i @click="removeTrademark">×</i>
+            </li>
+            <li class="with-x" v-for="(prop,index) in options.props" :key="prop">
+              {{prop}}
+              <i @click="removeProp(index)">×</i>
             </li>
           </ul>
         </div>
 
         <!--selector-->
-        <SearchSelector />
+        <SearchSelector :setTrademark="setTrademark" @addProp="addProp" />
 
         <!--details-->
         <div class="details clearfix">
           <div class="sui-navbar">
             <div class="navbar-inner filter">
               <ul class="sui-nav">
-                <li class="active">
-                  <a href="#">综合</a>
+                <li :class="isActive('1')">
+                  <a href="#">
+                    综合
+                    <i
+                      class="iconfont"
+                      :class="iconClass"
+                      v-if="isActive('1')"
+                    ></i>
+                  </a>
                 </li>
                 <li>
                   <a href="#">销量</a>
@@ -48,10 +58,14 @@
                   <a href="#">评价</a>
                 </li>
                 <li>
-                  <a href="#">价格⬆</a>
-                </li>
-                <li>
-                  <a href="#">价格⬇</a>
+                  <a href="#" :class="isActive('2')">
+                    价格
+                    <i
+                      class="iconfont"
+                      :class="iconClass"
+                      v-if="isActive('2')"
+                    ></i>
+                  </a>
                 </li>
               </ul>
             </div>
@@ -110,6 +124,7 @@
 </template>
 
 <script>
+import Vue from "vue";
 import { mapState } from "vuex";
 import SearchSelector from "./searchSelector/SearchSelector";
 export default {
@@ -128,12 +143,16 @@ export default {
         order: "1:desc", // 排序方式  1: 综合,2: 价格 asc: 升序,desc: 降序  "1:desc"
 
         pageNo: 1, // 页码
-        pageSize: 2 //	每页数量
+        pageSize: 5 //	每页数量
       }
     };
   },
-  beforeMount() {
-    this.updataOptions();
+  created() {
+    // 需要根据分类的query参数和关键字的params参数来搜索
+    // 1. 根据query和params参数更新options
+    this.updateOptions();
+    // 2. 发搜索请求
+    // this.getProductList();
   },
   mounted() {
     this.$store.dispatch("getProductList", this.options);
@@ -141,20 +160,27 @@ export default {
   computed: {
     ...mapState({
       productList: state => state.search.productList
-    })
+    }),
+    iconClass(){
+      return this.options.order.split(':')[1]==='asc'?'icon-shang':'icon-shang-copy'
+    }
   },
   watch: {
     $route() {
-      this.updataOptions();
+      this.updateOptions();
       this.getProductList();
     }
   },
   methods: {
+    // 判读指定的flag对的项是否选中
+    isActive(flag){
+        return this.options.order.indexOf(flag)===0
+    },
     getProductList(pageNo) {
       this.options.pageNo = pageNo;
       this.$store.dispatch("getProductList", this.options);
     },
-    updataOptions() {
+    updateOptions() {
       const {
         category1Id,
         category2Id,
@@ -170,6 +196,66 @@ export default {
         category3Id,
         keyword
       };
+    },
+    // 删除分类条件
+    removeCategory() {
+      // 重置相关数据
+      this.options.categoryName = "";
+      this.options.category1Id = "";
+      this.options.category2Id = "";
+      this.options.category3Id = "";
+      // 重新请求列表数据
+      // this.getProductList()
+      // 重新跳转路由组件以清除query参数
+      this.$router.push({ name: "search", params: this.$route.params });
+      // this.$router.replace({name:"search",params:this.$route.params,})
+    },
+    // 删除搜索关键字条件
+    removeKeyword() {
+      // 重置相关数据
+      this.options.keyword = "";
+      // 重新请求列表数据
+      // this.getProductList()
+      // 重新跳转路由组件以清除params参数
+      this.$router.replace({ name: "search", query: this.$route.query });
+      // 兄弟组件间通信   通知header组件删除输入框内容    通过事件总线对象分发自定义事件
+      this.$bus.$emit("removeKeyword");
+    },
+    // 设置新的品牌数据
+    setTrademark(trademark) {
+      // 更新品牌数据
+      if (this.options.trademark === trademark) return;
+      this.$set(this.options, "trademark", trademark);
+      // this.options.trademark = trademark;
+      this.getProductList();
+    },
+    // 移除品牌条件
+
+    removeTrademark() {
+      // 清除品牌数据
+      // this.options.trademark = ''
+      // delete this.options.trademark  // 不可以
+
+      // this.$delete(this.options, 'trademark')
+      Vue.delete(this.options, "trademark");
+
+      // 重新请求获取列表数据显示
+      this.getProductList();
+    },
+    // 添加属性条件
+    addProp(prop) {
+      // 如果要添加的属性条件已经存在   直接结束
+      if (this.options.props.indexOf(prop) >= 0) return;
+      // 向props中添加prop
+      this.options.props.push(prop);
+      // 重新请求获取列表数据
+      this.getProductList();
+    },
+    // 删除属性条件
+    removeProp(index) {
+      this.options.props.splice(index, 1);
+      // 重新请求获取列表数据
+      this.getProductList();
     }
   },
   components: {
