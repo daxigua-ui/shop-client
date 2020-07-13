@@ -10,7 +10,7 @@
     <!-- 连续页码 -->
     <button
       v-for="item in startEnd.end"
-      v-if="item>=startEnd.start" 
+      
       :key="item"
       @click="changeCurrentPage(item)"
       :class="{active: mcPage===item}"

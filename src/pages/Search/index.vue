@@ -38,14 +38,10 @@
           <div class="sui-navbar">
             <div class="navbar-inner filter">
               <ul class="sui-nav">
-                <li :class="isActive('1')">
+                <li :class="isActive('1')" @click="setOrder('1')">
                   <a href="#">
                     综合
-                    <i
-                      class="iconfont"
-                      :class="iconClass"
-                      v-if="isActive('1')"
-                    ></i>
+                    <i class="iconfont" v-if="isActive('1')" :class="iconClass"></i>
                   </a>
                 </li>
                 <li>
@@ -57,14 +53,10 @@
                 <li>
                   <a href="#">评价</a>
                 </li>
-                <li>
-                  <a href="#" :class="isActive('2')">
+                <li :class="isActive('2')" @click="setOrder('2')">
+                  <a href="#">
                     价格
-                    <i
-                      class="iconfont"
-                      :class="iconClass"
-                      v-if="isActive('2')"
-                    ></i>
+                    <i class="iconfont" v-if="isActive('2')" :class="iconClass"></i>
                   </a>
                 </li>
               </ul>
@@ -75,9 +67,9 @@
               <li class="yui3-u-1-5" v-for="item in productList.goodsList" :key="item.id">
                 <div class="list-wrap">
                   <div class="p-img">
-                    <a href="item.html" target="_blank">
+                    <router-link :to="`/detail/${item.id}`">
                       <img :src="item.defaultImg" />
-                    </a>
+                    </router-link>
                   </div>
                   <div class="price">
                     <strong>
@@ -86,11 +78,7 @@
                     </strong>
                   </div>
                   <div class="attr">
-                    <a
-                      target="_blank"
-                      href="item.html"
-                      title="促销信息，下单即赠送三个月CIBN视频会员卡！【小米电视新品4A 58 火爆预约中】"
-                    >{{item.title}}</a>
+                    <router-link :to="`/detail/${item.id}`">{{item.title}}</router-link>
                   </div>
                   <div class="commit">
                     <i class="command">
@@ -161,8 +149,10 @@ export default {
     ...mapState({
       productList: state => state.search.productList
     }),
-    iconClass(){
-      return this.options.order.split(':')[1]==='asc'?'icon-shang':'icon-shang-copy'
+    iconClass() {
+      return this.options.order.split(":")[1] === "asc"
+        ? "icon-shang"
+        : "icon-shang-copy";
     }
   },
   watch: {
@@ -172,9 +162,21 @@ export default {
     }
   },
   methods: {
+    // 设置新的排序
+    setOrder(flag) {
+      let [orderFlag, orderType] = this.options.order.split(":");
+      if (flag === orderFlag) {
+        orderType = orderType === "asc" ? "desc" : "asc";
+      } else {
+        orderFlag = flag;
+        orderType = "desc";
+      }
+      this.options.order = orderFlag + ":" + orderType;
+      this.getProductList();
+    },
     // 判读指定的flag对的项是否选中
-    isActive(flag){
-        return this.options.order.indexOf(flag)===0
+    isActive(orderFlag) {
+      return this.options.order.indexOf(orderFlag) === 0;
     },
     getProductList(pageNo) {
       this.options.pageNo = pageNo;
